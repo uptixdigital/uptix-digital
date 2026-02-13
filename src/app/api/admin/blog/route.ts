@@ -10,7 +10,7 @@ const blogPostSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
   excerpt: z.string().max(500, "Excerpt must be less than 500 characters").optional().nullable(),
   content: z.string().min(1, "Content is required").max(50000, "Content must be less than 50000 characters"),
-  coverImage: z.string().url("Invalid image URL").optional().nullable(),
+  coverImage: z.string().optional().nullable(),
   tags: z.array(z.string()).max(10, "Maximum 10 tags allowed").default([]),
   metaTitle: z.string().max(200, "Meta title must be less than 200 characters").optional().nullable(),
   metaDesc: z.string().max(500, "Meta description must be less than 500 characters").optional().nullable(),

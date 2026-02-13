@@ -29,17 +29,25 @@ const ENV_ONLY_SETTINGS = [
   'googleAnalyticsId'
 ]
 
+// Helper to validate email or empty/null
+const emailOrEmpty = z.union([
+  z.string().email(),
+  z.literal(''),
+  z.null(),
+  z.undefined()
+])
+
 const settingsSchema = z.object({
   siteName: z.string().min(1).max(100).optional(),
   siteDescription: z.string().max(500).optional(),
   logo: z.string().optional().nullable(),
   favicon: z.string().optional().nullable(),
-  smtpHost: z.string().optional(),
-  smtpPort: z.string().regex(/^\d*$/).optional(),
-  smtpUser: z.string().email().optional().nullable(),
+  smtpHost: z.string().optional().nullable(),
+  smtpPort: z.union([z.string().regex(/^\d+$/), z.literal(''), z.null(), z.undefined()]),
+  smtpUser: emailOrEmpty,
   smtpPass: z.string().optional().nullable(),
-  fromEmail: z.string().email().optional().nullable(),
-  fromName: z.string().max(100).optional(),
+  fromEmail: emailOrEmpty,
+  fromName: z.string().max(100).optional().nullable(),
   stripePublicKey: z.string().optional().nullable(),
   stripeSecretKey: z.string().optional().nullable(),
   paypalClientId: z.string().optional().nullable(),
@@ -109,12 +117,19 @@ export async function POST(req: Request) {
 
     const data = validationResult.data
     
+    // Convert empty strings to null for better storage
+    const sanitizeValue = (val: any): string => {
+      if (val === null || val === undefined) return ''
+      if (typeof val === 'boolean') return String(val)
+      return String(val)
+    }
+    
     // Save persistent settings to database
     for (const key of PERSISTENT_SETTINGS) {
       const value = data[key as keyof typeof data]
       if (value !== undefined) {
         const type = typeof value === 'boolean' ? 'boolean' : 'string'
-        await updateSetting(key, String(value), type)
+        await updateSetting(key, sanitizeValue(value), type)
       }
     }
 

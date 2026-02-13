@@ -3,17 +3,17 @@ import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
-const blogPostSchema = z.object({
+const projectSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
-  slug: z.string().min(1, "Slug is required").max(200, "Slug must be less than 200 characters")
-    .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
-  excerpt: z.string().max(500, "Excerpt must be less than 500 characters").optional().nullable(),
-  content: z.string().min(1, "Content is required").max(50000, "Content must be less than 50000 characters"),
-  coverImage: z.string().optional().nullable(),
-  tags: z.array(z.string()).max(10, "Maximum 10 tags allowed").default([]),
-  metaTitle: z.string().max(200, "Meta title must be less than 200 characters").optional().nullable(),
-  metaDesc: z.string().max(500, "Meta description must be less than 500 characters").optional().nullable(),
-  published: z.boolean().default(false),
+  description: z.string().min(1, "Description is required").max(5000, "Description must be less than 5000 characters"),
+  price: z.number().positive("Price must be positive").max(1000000, "Price must be less than 1,000,000"),
+  category: z.string().min(1, "Category is required").max(100, "Category must be less than 100 characters"),
+  techStack: z.array(z.string()).max(20, "Maximum 20 technologies allowed").default([]),
+  previewUrl: z.string().optional().nullable(),
+  repoUrl: z.string().optional().nullable(),
+  images: z.array(z.string()).max(10, "Maximum 10 images allowed").default([]),
+  featured: z.boolean().default(false),
+  published: z.boolean().default(true),
 })
 
 interface RouteParams {
@@ -37,8 +37,7 @@ export async function PUT(
     const { id } = await params
     const body = await req.json()
     
-    // Validate input
-    const validationResult = blogPostSchema.safeParse(body)
+    const validationResult = projectSchema.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
         { 
@@ -54,31 +53,16 @@ export async function PUT(
 
     const data = validationResult.data
     
-    // Check if slug already exists (excluding current blog)
-    const existingBlog = await prisma.blog.findFirst({
-      where: { 
-        slug: data.slug,
-        id: { not: id }
-      }
-    })
-    
-    if (existingBlog) {
-      return NextResponse.json(
-        { message: "A blog post with this slug already exists" },
-        { status: 409 }
-      )
-    }
-    
-    const blog = await prisma.blog.update({
+    const project = await prisma.project.update({
       where: { id },
       data,
     })
 
-    return NextResponse.json(blog)
+    return NextResponse.json(project)
   } catch (error) {
-    console.error("Error updating blog post:", error)
+    console.error("Error updating project:", error)
     return NextResponse.json(
-      { message: "Failed to update blog post" },
+      { message: "Failed to update project" },
       { status: 500 }
     )
   }
@@ -100,15 +84,15 @@ export async function DELETE(
 
     const { id } = await params
 
-    await prisma.blog.delete({
+    await prisma.project.delete({
       where: { id }
     })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting blog post:", error)
+    console.error("Error deleting project:", error)
     return NextResponse.json(
-      { message: "Failed to delete blog post" },
+      { message: "Failed to delete project" },
       { status: 500 }
     )
   }
