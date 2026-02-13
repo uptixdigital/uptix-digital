@@ -18,12 +18,15 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   emailVerified DateTime?
-  
+
   orders        Order[]
   messages      Message[]
   blogs         Blog[]
   accounts      Account[]
   sessions      Session[]
+
+  @@index([email])
+  @@index([createdAt])
 }
 
 model Account {
@@ -74,9 +77,13 @@ model Order {
   files       String[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  
+
   messages    Message[]
   payments    Payment[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Message {
@@ -89,6 +96,10 @@ model Message {
   isGeneral Boolean  @default(false)
   createdAt DateTime @default(now())
   read      Boolean  @default(false)
+
+  @@index([userId])
+  @@index([orderId])
+  @@index([createdAt])
 }
 
 model Blog {
@@ -107,6 +118,11 @@ model Blog {
   views       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([authorId])
+  @@index([published])
+  @@index([createdAt])
 }
 
 model Project {
@@ -124,6 +140,11 @@ model Project {
   downloads   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([published])
+  @@index([featured])
+  @@index([createdAt])
 }
 
 model Payment {
@@ -136,6 +157,10 @@ model Payment {
   txnId     String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Settings {
@@ -163,6 +188,10 @@ model Service {
   featured    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([published])
+  @@index([featured])
 }
 
 enum Role {
@@ -200,4 +229,23 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // e.g., "CREATE_BLOG", "UPDATE_SETTINGS", "DELETE_USER"
+  entity    String   // e.g., "Blog", "Settings", "User"
+  entityId  String?  // ID of the affected entity
+  changes   Json?    // Object with before/after values
+  ipAddress String?
+  userAgent String?  @db.Text
+  status    String   @default("SUCCESS") // SUCCESS, FAILED, ERROR
+  reason    String?  // Why it failed (for failed attempts)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([entityId])
 }
