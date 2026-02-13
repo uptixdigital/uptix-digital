@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
 import { prisma } from "./prisma"
+import { getEnv } from "./env"
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -38,7 +39,8 @@ export const authOptions: NextAuthOptions = {
         try {
           if (!credentials?.email || !credentials?.password) {
             console.log("[AUTH] Missing credentials")
-            throw new Error("Please provide email and password")
+            // Return null with generic message - don't reveal if email exists
+            return null
           }
 
           const user = await prisma.user.findUnique({
@@ -49,12 +51,14 @@ export const authOptions: NextAuthOptions = {
 
           if (!user) {
             console.log("[AUTH] User not found:", credentials.email)
-            throw new Error("Invalid email or password")
+            // Generic error - don't reveal user existence
+            return null
           }
 
           if (!user.password) {
             console.log("[AUTH] User has no password:", credentials.email)
-            throw new Error("Account requires password setup")
+            // Generic error - don't reveal authentication method
+            return null
           }
 
           const isPasswordValid = await bcrypt.compare(
@@ -64,7 +68,8 @@ export const authOptions: NextAuthOptions = {
 
           if (!isPasswordValid) {
             console.log("[AUTH] Invalid password for:", credentials.email)
-            throw new Error("Invalid email or password")
+            // Generic error
+            return null
           }
 
           console.log("[AUTH] User authorized:", user.email, "Role:", user.role)
@@ -78,7 +83,6 @@ export const authOptions: NextAuthOptions = {
           }
         } catch (error) {
           console.error("[AUTH] Authorize error:", error)
-          // Return null instead of throwing to handle gracefully
           return null
         }
       },

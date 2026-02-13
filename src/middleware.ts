@@ -3,14 +3,21 @@ import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  
+
+  // Force HTTPS in production
+  if (process.env.NODE_ENV === 'production' && request.headers.get('x-forwarded-proto') !== 'https') {
+    const httpsUrl = new URL(request.url)
+    httpsUrl.protocol = 'https:'
+    return NextResponse.redirect(httpsUrl)
+  }
+
   // Check for session token in cookies
-  const sessionToken = request.cookies.get("next-auth.session-token")?.value || 
+  const sessionToken = request.cookies.get("next-auth.session-token")?.value ||
                        request.cookies.get("__Secure-next-auth.session-token")?.value
   const isLoggedIn = !!sessionToken
 
   const isApiAuthRoute = pathname.startsWith("/api/auth")
-  const isPublicRoute = ["/", "/services", "/contact", "/blog", "/projects"].some(route => 
+  const isPublicRoute = ["/", "/services", "/contact", "/blog", "/projects", "/about"].some(route =>
     pathname === route || pathname.startsWith(`${route}/`)
   )
   const isAuthRoute = pathname.startsWith("/auth")
