@@ -1,5 +1,5 @@
 import HeroSection from "@/components/sections/hero"
-import ServicesSection from "@/components/sections/services"
+import { ServicesSection } from "@/components/sections/services"
 import StatsSection from "@/components/sections/stats"
 import ProjectsSection from "@/components/sections/projects"
 import ProcessSection from "@/components/sections/process"
