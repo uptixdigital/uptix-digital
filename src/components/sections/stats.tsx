@@ -52,16 +52,38 @@ export default function StatsSection() {
           {stats.map((stat, index) => (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ 
+                delay: index * 0.15, 
+                duration: 0.6,
+                type: "spring",
+                stiffness: 100
+              }}
               viewport={{ once: true }}
-              className="text-center"
+              whileHover={{ 
+                scale: 1.05,
+                transition: { duration: 0.2 }
+              }}
+              className="text-center group cursor-default"
             >
-              <div className="text-4xl md:text-5xl font-bold gradient-text mb-2">
+              {/* Glow effect on hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-purple-500/0 to-pink-500/0 group-hover:from-blue-500/10 group-hover:via-purple-500/10 group-hover:to-pink-500/10 rounded-xl blur-xl transition-all duration-500 -z-10" />
+              
+              <motion.div 
+                className="text-4xl md:text-5xl font-bold gradient-text mb-2 group-hover:scale-110 transition-transform duration-300"
+              >
                 <AnimatedCounter value={stat.value} suffix={stat.suffix} />
-              </div>
-              <div className="text-slate-400 font-mono text-sm">{stat.label}</div>
+              </motion.div>
+              <motion.div 
+                className="text-slate-400 font-mono text-sm group-hover:text-slate-300 transition-colors"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                transition={{ delay: index * 0.15 + 0.3 }}
+                viewport={{ once: true }}
+              >
+                {stat.label}
+              </motion.div>
             </motion.div>
           ))}
         </div>

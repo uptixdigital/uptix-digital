@@ -179,10 +179,19 @@ export function AdminSettingsForm() {
         const response = await fetch("/api/admin/settings")
         if (response.ok) {
           const data = await response.json()
+          // Convert null values to empty strings for form inputs
+          const sanitizedData = Object.entries(data).reduce((acc, [key, value]) => {
+            acc[key as keyof typeof settings] = value === null ? '' : value as any
+            return acc
+          }, {} as Partial<typeof settings>)
+          
           setSettings(prev => ({
             ...prev,
-            ...data,
+            ...sanitizedData,
           }))
+        } else {
+          const errorData = await response.json()
+          console.error("Failed to fetch settings:", errorData)
         }
       } catch (error) {
         console.error("Error fetching settings:", error)
@@ -194,23 +203,59 @@ export function AdminSettingsForm() {
     fetchSettings()
   }, [])
 
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
   const handleSave = async () => {
     setIsLoading(true)
+    setSaveError(null)
+    setSaveSuccess(false)
+    
     try {
+      // Filter out empty strings for optional fields to prevent validation issues
+      const settingsToSave = {
+        ...settings,
+        smtpUser: settings.smtpUser || null,
+        smtpPass: settings.smtpPass || null,
+        fromEmail: settings.fromEmail || null,
+        fromName: settings.fromName || null,
+      }
+      
+      console.log("Saving settings:", settingsToSave)
+      
       const response = await fetch("/api/admin/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(settingsToSave),
       })
       
+      const data = await response.json()
+      console.log("Save response:", data)
+      
       if (response.ok) {
-        alert("Settings saved successfully!")
+        setSaveSuccess(true)
+        // Re-fetch settings to confirm they were saved
+        const fetchResponse = await fetch("/api/admin/settings")
+        if (fetchResponse.ok) {
+          const freshData = await fetchResponse.json()
+          setSettings(prev => ({
+            ...prev,
+            ...freshData,
+          }))
+        }
+        setTimeout(() => setSaveSuccess(false), 3000)
       } else {
-        alert("Failed to save settings")
+        if (data.errors && Array.isArray(data.errors)) {
+          const errorMessages = data.errors.map((e: any) => `${e.field}: ${e.message}`).join(', ')
+          setSaveError(`Validation failed: ${errorMessages}`)
+        } else {
+          setSaveError(data.message || data.error || "Failed to save settings")
+        }
+        console.error("Save error:", data)
       }
     } catch (error) {
       console.error("Error saving settings:", error)
-      alert("An error occurred")
+      setSaveError("Network error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -535,6 +580,21 @@ export function AdminSettingsForm() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {saveError && (
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400 text-sm">{saveError}</p>
+          </div>
+        )}
+        
+        {saveSuccess && (
+          <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+            <p className="text-green-400 text-sm flex items-center">
+              <Check className="w-4 h-4 mr-2" />
+              Settings saved successfully!
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-4">
           <Button

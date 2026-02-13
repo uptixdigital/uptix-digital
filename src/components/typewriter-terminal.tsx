@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface TerminalLine {
   text: string
@@ -107,33 +107,136 @@ const languageSessions: LanguageSession[] = [
   }
 ]
 
+// Spinning Electron Icon Component
+function SpinningElectron() {
+  return (
+    <motion.div
+      className="relative w-5 h-5"
+      animate={{ rotate: 360 }}
+      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+    >
+      {/* Electron orbits */}
+      <svg viewBox="0 0 24 24" className="w-full h-full">
+        {/* Nucleus */}
+        <circle cx="12" cy="12" r="2" fill="#60a5fa" />
+        
+        {/* Orbit 1 */}
+        <ellipse 
+          cx="12" cy="12" rx="9" ry="4" 
+          fill="none" 
+          stroke="url(#gradient1)" 
+          strokeWidth="1"
+          opacity="0.6"
+        />
+        
+        {/* Orbit 2 - rotated */}
+        <ellipse 
+          cx="12" cy="12" rx="9" ry="4" 
+          fill="none" 
+          stroke="url(#gradient2)" 
+          strokeWidth="1"
+          opacity="0.6"
+          transform="rotate(60 12 12)"
+        />
+        
+        {/* Orbit 3 - rotated */}
+        <ellipse 
+          cx="12" cy="12" rx="9" ry="4" 
+          fill="none" 
+          stroke="url(#gradient3)" 
+          strokeWidth="1"
+          opacity="0.6"
+          transform="rotate(120 12 12)"
+        />
+        
+        {/* Electrons */}
+        <circle cx="21" cy="12" r="1.5" fill="#f472b6">
+          <animate attributeName="opacity" values="1;0.5;1" dur="1s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="12" cy="16" r="1.5" fill="#a78bfa" transform="rotate(60 12 12)">
+          <animate attributeName="opacity" values="0.5;1;0.5" dur="1s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="12" cy="8" r="1.5" fill="#60a5fa" transform="rotate(120 12 12)">
+          <animate attributeName="opacity" values="1;0.5;1" dur="1s" repeatCount="indefinite" />
+        </circle>
+        
+        {/* Gradients */}
+        <defs>
+          <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#60a5fa" />
+            <stop offset="100%" stopColor="#a78bfa" />
+          </linearGradient>
+          <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#a78bfa" />
+            <stop offset="100%" stopColor="#f472b6" />
+          </linearGradient>
+          <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#f472b6" />
+            <stop offset="100%" stopColor="#60a5fa" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </motion.div>
+  )
+}
+
+// Glitch animation variants
+const glitchVariants = {
+  hidden: { 
+    opacity: 0,
+    x: -10,
+    filter: "blur(10px)"
+  },
+  visible: {
+    opacity: [0, 1, 0.8, 1, 0.9, 1],
+    x: [-10, 5, -3, 2, 0, 0],
+    filter: ["blur(10px)", "blur(0px)", "blur(2px)", "blur(0px)", "blur(1px)", "blur(0px)"],
+    transition: {
+      duration: 0.6,
+      times: [0, 0.2, 0.4, 0.6, 0.8, 1],
+      ease: "easeOut"
+    }
+  }
+}
+
+const lineGlitchVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: (i: number) => ({
+    opacity: [0, 1, 0.5, 1],
+    x: [-20, 10, -5, 0],
+    transition: {
+      duration: 0.4,
+      delay: i * 0.05,
+      times: [0, 0.3, 0.6, 1]
+    }
+  })
+}
+
 export function TypewriterTerminal() {
   const [displayedLines, setDisplayedLines] = useState<string[]>([])
   const [currentLineIndex, setCurrentLineIndex] = useState(0)
   const [currentCharIndex, setCurrentCharIndex] = useState(0)
   const [isTyping, setIsTyping] = useState(true)
   const [currentSessionIndex, setCurrentSessionIndex] = useState(0)
-  const [showFullTerminal, setShowFullTerminal] = useState(false)
   const [sessionComplete, setSessionComplete] = useState(false)
+  const [isFirstRender, setIsFirstRender] = useState(true)
 
   const currentSession = languageSessions[currentSessionIndex]
   const terminalLines = currentSession.lines
 
-  // Show full terminal immediately on mount
   useEffect(() => {
-    setShowFullTerminal(true)
-    // Small delay before starting to type
-    const timer = setTimeout(() => {
+    // Glitch effect on first render
+    const glitchTimer = setTimeout(() => {
+      setIsFirstRender(false)
       setIsTyping(true)
-    }, 500)
-    return () => clearTimeout(timer)
+    }, 800)
+    return () => clearTimeout(glitchTimer)
   }, [])
 
   useEffect(() => {
-    if (!isTyping || !showFullTerminal) return
+    if (!isTyping || isFirstRender) return
 
     if (currentLineIndex >= terminalLines.length) {
-      // Session complete, wait then switch to next
       setSessionComplete(true)
       const timer = setTimeout(() => {
         setCurrentSessionIndex((prev) => (prev + 1) % languageSessions.length)
@@ -147,7 +250,6 @@ export function TypewriterTerminal() {
 
     const currentLine = terminalLines[currentLineIndex]
     
-    // Handle empty lines (just delays)
     if (!currentLine.text) {
       const timer = setTimeout(() => {
         setDisplayedLines(prev => [...prev, ""])
@@ -157,7 +259,6 @@ export function TypewriterTerminal() {
       return () => clearTimeout(timer)
     }
 
-    // Handle typing
     if (currentCharIndex < currentLine.text.length) {
       const timer = setTimeout(() => {
         setDisplayedLines(prev => {
@@ -173,85 +274,142 @@ export function TypewriterTerminal() {
       }, currentLine.typeSpeed || 20)
       return () => clearTimeout(timer)
     } else {
-      // Line complete, move to next
       const timer = setTimeout(() => {
         setCurrentLineIndex(prev => prev + 1)
         setCurrentCharIndex(0)
       }, currentLine.delay || 100)
       return () => clearTimeout(timer)
     }
-  }, [currentLineIndex, currentCharIndex, isTyping, showFullTerminal, currentSessionIndex, terminalLines])
+  }, [currentLineIndex, currentCharIndex, isTyping, isFirstRender, currentSessionIndex, terminalLines])
 
   return (
     <div className="font-mono text-sm h-full flex flex-col">
-      {/* Session Header */}
-      <motion.div 
-        className="flex items-center gap-2 mb-4 pb-3 border-b border-white/10"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <span className="text-2xl">{currentSession.icon}</span>
-        <span className="text-white font-semibold">{currentSession.name}</span>
-        <span className="text-slate-500 text-xs ml-auto">
-          Session {currentSessionIndex + 1}/{languageSessions.length}
-        </span>
-      </motion.div>
+      {/* Header - Language top left, Session top right (SWAPPED) */}
+      <div className="flex items-center justify-between mb-4">
+        {/* Language icon + name - top left, no background */}
+        <motion.div 
+          className="inline-flex items-center space-x-2"
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <span className="text-xl">{currentSession.icon}</span>
+          <span className="text-white font-semibold">{currentSession.name}</span>
+        </motion.div>
 
-      {/* Terminal Content */}
-      <div className="flex-1 overflow-hidden">
-        {showFullTerminal && terminalLines.map((line, index) => {
-          if (index > currentLineIndex) {
-            // Show placeholder for future lines
-            return (
-              <div key={index} className="h-5" />
-            )
-          }
-          
-          const isCurrentLine = index === currentLineIndex && !sessionComplete
-          const displayText = displayedLines[index] || ""
-          
-          return (
-            <motion.div 
-              key={`${currentSessionIndex}-${index}`} 
-              className={line.color || "text-slate-400"}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.1 }}
-            >
-              {line.text.startsWith("?") && (
-                <span className="text-blue-400">? </span>
-              )}
-              {line.text.startsWith("→") && (
-                <span className="text-blue-400">→ </span>
-              )}
-              {displayText.replace(/^[?→]\s*/, "")}
-              {isCurrentLine && isTyping && (
-                <motion.span
-                  animate={{ opacity: [1, 0] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  className="inline-block w-2 h-4 bg-blue-400 ml-0.5 align-middle"
-                />
-              )}
-            </motion.div>
-          )
-        })}
+        {/* Session indicator - top right */}
+        <motion.div 
+          className="text-slate-500 text-xs"
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          Session {currentSessionIndex + 1}/{languageSessions.length}
+        </motion.div>
       </div>
 
-      {/* Status Bar */}
+      {/* Terminal Content - Fixed height container that doesn't shrink */}
+      <div className="flex-1 min-h-[320px] max-h-[320px] overflow-hidden relative">
+        <AnimatePresence mode="wait">
+          {isFirstRender ? (
+            // Glitch effect on first render
+            <motion.div
+              key="glitch"
+              className="absolute inset-0"
+              initial="hidden"
+              animate="visible"
+              exit={{ opacity: 0 }}
+            >
+              {terminalLines.slice(0, 8).map((line, index) => (
+                <motion.div
+                  key={`glitch-${index}`}
+                  custom={index}
+                  variants={lineGlitchVariants}
+                  className={`${line.color || "text-slate-400"} h-5 leading-5 opacity-50`}
+                >
+                  {line.text}
+                </motion.div>
+              ))}
+              <motion.div 
+                className="mt-4 text-blue-400"
+                animate={{ opacity: [0, 1, 0] }}
+                transition={{ duration: 0.5, repeat: 2 }}
+              >
+                Initializing...
+              </motion.div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key={currentSessionIndex}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0"
+            >
+              {terminalLines.map((line, index) => {
+                if (index > currentLineIndex) {
+                  return <div key={index} className="h-5" />
+                }
+                
+                const isCurrentLine = index === currentLineIndex && !sessionComplete
+                const displayText = displayedLines[index] || ""
+                
+                return (
+                  <motion.div 
+                    key={index} 
+                    className={`${line.color || "text-slate-400"} h-5 leading-5`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    {line.text.startsWith("?") && (
+                      <span className="text-blue-400">? </span>
+                    )}
+                    {line.text.startsWith("→") && (
+                      <span className="text-blue-400">→ </span>
+                    )}
+                    {displayText.replace(/^[?→]\s*/, "")}
+                    {isCurrentLine && isTyping && (
+                      <motion.span
+                        animate={{ opacity: [1, 0] }}
+                        transition={{ duration: 0.5, repeat: Infinity }}
+                        className="inline-block w-2 h-4 bg-blue-400 ml-0.5 align-middle"
+                      />
+                    )}
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Status Bar - Spinning electron at bottom left when typing, session dots at right */}
       <motion.div 
-        className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs"
+        className="mt-auto pt-4 border-t border-white/10 flex items-center justify-between text-xs"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
       >
-        <span className="text-slate-500">
-          {sessionComplete ? (
-            <span className="text-green-400">✓ Complete</span>
+        {/* Bottom left - Spinning electron when typing, otherwise status text - CHANGED "Typing" to "Reasoning" */}
+        <div className="flex items-center gap-2">
+          {!sessionComplete && isTyping ? (
+            <>
+              <SpinningElectron />
+              <span className="text-blue-400">Reasoning...</span>
+            </>
+          ) : sessionComplete ? (
+            <span className="text-green-400 flex items-center gap-1">
+              <span>✓</span>
+              <span>Complete</span>
+            </span>
           ) : (
-            <span className="text-blue-400">● Typing...</span>
+            <span className="text-slate-500">Ready</span>
           )}
-        </span>
+        </div>
+
+        {/* Session progress dots - bottom right */}
         <div className="flex gap-2">
           {languageSessions.map((_, idx) => (
             <div

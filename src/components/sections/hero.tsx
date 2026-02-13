@@ -52,12 +52,18 @@ export default function HeroSection() {
         <div className="max-w-5xl mx-auto text-center">
           {/* Badge */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center space-x-2 glass-card px-4 py-2 rounded-full mb-8"
+            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+            whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+            className="inline-flex items-center space-x-2 glass-card px-4 py-2 rounded-full mb-8 cursor-default"
           >
-            <Sparkles className="w-4 h-4 text-blue-400" />
+            <motion.div
+              animate={{ rotate: [0, 15, -15, 0] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+            >
+              <Sparkles className="w-4 h-4 text-blue-400" />
+            </motion.div>
             <span className="text-sm text-slate-300 font-mono">
               Transforming Ideas into Digital Reality
             </span>
@@ -65,21 +71,33 @@ export default function HeroSection() {
 
           {/* Main Heading */}
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
           >
-            <span className="text-white">We Build</span>
+            <motion.span 
+              className="text-white inline-block"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
+            >
+              We Build
+            </motion.span>
             <br />
-            <span className="gradient-text">Digital Excellence</span>
+            <motion.span 
+              className="gradient-text inline-block"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              Digital Excellence
+            </motion.span>
           </motion.h1>
 
           {/* Subtitle */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg sm:text-xl text-slate-400 mb-10 max-w-2xl mx-auto font-mono"
           >
             Premium web & app development agency crafting high-performance 
@@ -88,48 +106,57 @@ export default function HeroSection() {
 
           {/* CTA Buttons */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <Link href="/contact">
-              <Button
-                size="lg"
-                className="btn-glow bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white border-0 px-8 py-6 text-lg group"
-              >
-                Start Your Project
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link href="/projects">
-              <Button
-                size="lg"
-                variant="outline"
-                className="glass-card border-white/20 px-8 py-6 text-lg group"
-              >
-                <Play className="mr-2 w-5 h-5" />
-                View Our Work
-              </Button>
-            </Link>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link href="/contact">
+                <Button
+                  size="lg"
+                  className="btn-glow bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white border-0 px-8 py-6 text-lg group relative overflow-hidden"
+                >
+                  <span className="relative z-10 flex items-center">
+                    Start Your Project
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                </Button>
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link href="/projects">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="glass-card border-white/20 px-8 py-6 text-lg group hover:bg-white/10 hover:border-white/30 transition-all duration-300"
+                >
+                  <Play className="mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />
+                  View Our Work
+                </Button>
+              </Link>
+            </motion.div>
           </motion.div>
 
           {/* Code Preview Card */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="mt-16 relative"
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.5, type: "spring", stiffness: 100 }}
+            whileHover={{ y: -5, transition: { duration: 0.3 } }}
+            className="mt-16 relative group"
           >
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl blur-lg opacity-30" />
-            <div className="relative terminal">
-              <div className="terminal-header flex items-center space-x-2">
+            {/* Glow effect on hover */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-500" />
+            <div className="relative terminal h-[480px] flex flex-col group-hover:border-white/20 transition-colors duration-300">
+              <div className="terminal-header flex items-center space-x-2 flex-shrink-0">
                 <div className="w-3 h-3 rounded-full bg-red-500" />
                 <div className="w-3 h-3 rounded-full bg-yellow-500" />
                 <div className="w-3 h-3 rounded-full bg-green-500" />
                 <span className="ml-4 text-xs text-slate-500 font-mono">uptix-digital — bash — 80x24</span>
               </div>
-              <div className="p-6 text-left">
+              <div className="p-6 text-left flex-1 overflow-hidden">
                 <TypewriterTerminal />
               </div>
             </div>
@@ -141,13 +168,13 @@ export default function HeroSection() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 1 }}
+        transition={{ delay: 1.2, duration: 1 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
       >
         <motion.div
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="w-6 h-10 border-2 border-slate-600 rounded-full flex justify-center pt-2"
+          className="w-6 h-10 border-2 border-slate-600 rounded-full flex justify-center pt-2 cursor-pointer hover:border-blue-400 transition-colors"
         >
           <motion.div
             animate={{ opacity: [1, 0, 1], y: [0, 8, 0] }}

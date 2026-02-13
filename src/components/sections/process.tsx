@@ -43,73 +43,141 @@ export default function ProcessSection() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6 }}
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-cyan-400 font-mono text-sm">// PROCESS</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mt-2 mb-4">
+          <motion.span 
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="text-cyan-400 font-mono text-sm inline-block"
+          >
+            // PROCESS
+          </motion.span>
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            viewport={{ once: true }}
+            className="text-3xl md:text-4xl lg:text-5xl font-bold mt-2 mb-4"
+          >
             How We <span className="gradient-text">Work</span>
-          </h2>
-          <p className="text-slate-400 max-w-2xl mx-auto font-mono">
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="text-slate-400 max-w-2xl mx-auto font-mono"
+          >
             Our proven development process ensures transparent communication 
             and exceptional results.
-          </p>
+          </motion.p>
         </motion.div>
 
         {/* Process Steps */}
         <div className="relative">
-          {/* Connection Line */}
-          <div className="hidden lg:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+          {/* Connection Line - Completely hidden behind cards */}
+          <div 
+            className="hidden lg:block absolute h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-30"
+            style={{ 
+              top: '52px',
+              left: '15%',
+              right: '15%',
+              zIndex: 0 
+            }} 
+          />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative" style={{ zIndex: 1 }}>
             {steps.map((step, index) => (
               <motion.div
                 key={step.number}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                transition={{ duration: 0.6, delay: index * 0.15 }}
                 viewport={{ once: true }}
-                className="relative"
+                whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                className="relative group"
               >
-                <div className="glass-card rounded-2xl p-6 h-full relative z-10">
+                {/* Hover glow effect */}
+                <div 
+                  className="absolute -inset-1 bg-gradient-to-r from-blue-500/0 via-purple-500/0 to-pink-500/0 rounded-2xl blur-lg opacity-0 group-hover:opacity-40 transition-opacity duration-500"
+                  style={{ zIndex: -1 }}
+                />
+                
+                <div 
+                  className="glass-card rounded-2xl p-6 h-full relative overflow-hidden transition-all duration-300 group-hover:border-white/20 group-hover:shadow-lg group-hover:shadow-blue-500/10"
+                  style={{ 
+                    zIndex: 2, 
+                    background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.7))',
+                  }}
+                >
+                  {/* Animated background on hover */}
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/5 group-hover:to-purple-500/5 transition-all duration-500"
+                  />
+
                   {/* Step Number */}
-                  <div className="absolute -top-4 left-6">
-                    <span className="text-4xl font-bold text-slate-700 font-mono">
+                  <motion.div 
+                    className="absolute -top-4 left-6"
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.15 + 0.3 }}
+                    viewport={{ once: true }}
+                  >
+                    <span className="text-4xl font-bold text-slate-700 font-mono group-hover:text-slate-600 transition-colors">
                       {step.number}
                     </span>
-                  </div>
+                  </motion.div>
 
-                  {/* Icon */}
-                  <div className={`w-16 h-16 rounded-2xl bg-${step.color}-500/10 flex items-center justify-center mb-4 mt-4`}>
-                    <step.icon className={`w-8 h-8 text-${step.color}-400`} />
-                  </div>
+                  {/* Icon - positioned to cover the line */}
+                  <motion.div 
+                    className={`w-14 h-14 rounded-xl bg-${step.color}-500/10 flex items-center justify-center mb-4 mt-4 relative group-hover:scale-110 group-hover:bg-${step.color}-500/20 transition-all duration-300`}
+                    style={{ zIndex: 3 }}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: index * 0.15 + 0.2 }}
+                    viewport={{ once: true }}
+                  >
+                    <step.icon className={`w-7 h-7 text-${step.color}-400 group-hover:text-${step.color}-300 transition-colors`} />
+                  </motion.div>
 
                   {/* Content */}
-                  <h3 className="text-xl font-bold text-white mb-2">
+                  <motion.h3 
+                    className="text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.15 + 0.3 }}
+                    viewport={{ once: true }}
+                  >
                     {step.title}
-                  </h3>
-                  <p className="text-slate-400 text-sm leading-relaxed">
+                  </motion.h3>
+                  <motion.p 
+                    className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.15 + 0.4 }}
+                    viewport={{ once: true }}
+                  >
                     {step.description}
-                  </p>
+                  </motion.p>
 
                   {/* Checkmark */}
-                  <div className="mt-4 flex items-center space-x-2">
-                    <CheckCircle2 className={`w-5 h-5 text-${step.color}-400`} />
-                    <span className="text-xs text-slate-500 font-mono">Phase Complete</span>
-                  </div>
+                  <motion.div 
+                    className="mt-4 flex items-center space-x-2"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    transition={{ duration: 0.5, delay: index * 0.15 + 0.5 }}
+                    viewport={{ once: true }}
+                  >
+                    <CheckCircle2 className={`w-5 h-5 text-${step.color}-400 group-hover:scale-110 transition-transform`} />
+                    <span className="text-xs text-slate-500 font-mono group-hover:text-slate-400 transition-colors">Phase Complete</span>
+                  </motion.div>
                 </div>
-
-                {/* Arrow for desktop */}
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-24 -right-4 z-20">
-                    <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full" />
-                    </div>
-                  </div>
-                )}
               </motion.div>
             ))}
           </div>

@@ -143,9 +143,9 @@ export function Footer() {
             <Link href="/terms" className="text-slate-400 hover:text-white text-sm transition-colors">
               Terms
             </Link>
-            <Link href="/sitemap" className="text-slate-400 hover:text-white text-sm transition-colors">
+            <a href="/sitemap.xml" className="text-slate-400 hover:text-white text-sm transition-colors">
               Sitemap
-            </Link>
+            </a>
           </div>
         </div>
       </div>

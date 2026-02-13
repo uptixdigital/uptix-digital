@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Loader2, Save, Eye, EyeOff, Trash2 } from "lucide-react"
+import { Loader2, Save, Eye, EyeOff, Trash2, Upload, X, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -25,6 +25,132 @@ interface Blog {
 
 interface BlogPostFormProps {
   blog?: Blog
+}
+
+interface FileUploadProps {
+  id: string
+  label: string
+  accept: string
+  value: string
+  onChange: (url: string) => void
+  folder: string
+}
+
+function FileUpload({ id, label, accept, value, onChange, folder }: FileUploadProps) {
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    setUploadError(null)
+    setUploadSuccess(false)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("folder", folder)
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Upload failed")
+      }
+
+      onChange(data.url)
+      setUploadSuccess(true)
+      
+      setTimeout(() => setUploadSuccess(false), 3000)
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Upload failed")
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleClear = () => {
+    onChange("")
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id} className="text-slate-300">{label}</Label>
+      
+      <div className="flex gap-2">
+        <Input
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Enter URL or upload file"
+          className="glass border-white/10 bg-white/5 text-white flex-1"
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={accept}
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+          className="glass-card border-white/10 hover:bg-white/10"
+        >
+          {isUploading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Upload className="w-4 h-4" />
+          )}
+        </Button>
+        {value && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClear}
+            className="glass-card border-white/10 hover:bg-red-500/10 hover:text-red-400"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+
+      {uploadError && (
+        <p className="text-sm text-red-400">{uploadError}</p>
+      )}
+
+      {uploadSuccess && (
+        <p className="text-sm text-green-400 flex items-center">
+          <Check className="w-3 h-3 mr-1" />
+          File uploaded successfully!
+        </p>
+      )}
+
+      {value && (
+        <div className="mt-2 p-2 glass-card border-white/10 rounded-lg">
+          <p className="text-xs text-slate-400 mb-2">Preview:</p>
+          <img
+            src={value}
+            alt={label}
+            className="max-h-32 max-w-full object-contain rounded"
+          />
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function BlogPostForm({ blog }: BlogPostFormProps) {
@@ -175,16 +301,14 @@ export function BlogPostForm({ blog }: BlogPostFormProps) {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="coverImage" className="text-slate-300">Cover Image URL</Label>
-              <Input
-                id="coverImage"
-                value={formData.coverImage}
-                onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                placeholder="https://example.com/image.jpg"
-                className="glass border-white/10 bg-white/5 text-white"
-              />
-            </div>
+            <FileUpload
+              id="coverImage"
+              label="Cover Image"
+              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+              value={formData.coverImage}
+              onChange={(url) => setFormData({ ...formData, coverImage: url })}
+              folder="blog"
+            />
 
             <div className="space-y-2">
               <Label htmlFor="tags" className="text-slate-300">Tags (comma-separated)</Label>
@@ -233,7 +357,7 @@ export function BlogPostForm({ blog }: BlogPostFormProps) {
           <CardHeader>
             <CardTitle className="text-white">Publishing</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="flex items-center space-x-3">
               <input
                 type="checkbox"
@@ -252,6 +376,11 @@ export function BlogPostForm({ blog }: BlogPostFormProps) {
                 )}
               </Label>
             </div>
+            <p className="text-xs text-slate-500">
+              {formData.published 
+                ? "This post is visible on the public blog page." 
+                : "This post is saved as a draft and will not appear on the public blog page."}
+            </p>
           </CardContent>
         </Card>
 

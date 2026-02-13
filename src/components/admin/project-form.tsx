@@ -1,29 +1,162 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Loader2, Save, Upload } from "lucide-react"
+import { Loader2, Save, Upload, X, Check, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export function ProjectForm() {
+interface Project {
+  id: string
+  title: string
+  description: string
+  price: number
+  category: string
+  techStack: string[]
+  previewUrl: string | null
+  repoUrl: string | null
+  images: string[]
+  featured: boolean
+  published: boolean
+}
+
+interface ProjectFormProps {
+  project?: Project
+}
+
+interface FileUploadProps {
+  id: string
+  label: string
+  accept: string
+  value: string
+  onChange: (url: string) => void
+  folder: string
+}
+
+function FileUpload({ id, label, accept, value, onChange, folder }: FileUploadProps) {
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    setUploadError(null)
+    setUploadSuccess(false)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("folder", folder)
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Upload failed")
+      }
+
+      onChange(data.url)
+      setUploadSuccess(true)
+      
+      setTimeout(() => setUploadSuccess(false), 3000)
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Upload failed")
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleClear = () => {
+    onChange("")
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id} className="text-slate-300">{label}</Label>
+      
+      <div className="flex gap-2">
+        <Input
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Enter URL or upload file"
+          className="glass border-white/10 bg-white/5 text-white flex-1"
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={accept}
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+          className="glass-card border-white/10 hover:bg-white/10"
+        >
+          {isUploading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Upload className="w-4 h-4" />
+          )}
+        </Button>
+        {value && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClear}
+            className="glass-card border-white/10 hover:bg-red-500/10 hover:text-red-400"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+
+      {uploadError && (
+        <p className="text-sm text-red-400">{uploadError}</p>
+      )}
+
+      {uploadSuccess && (
+        <p className="text-sm text-green-400 flex items-center">
+          <Check className="w-3 h-3 mr-1" />
+          File uploaded successfully!
+        </p>
+      )}
+    </div>
+  )
+}
+
+export function ProjectForm({ project }: ProjectFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    price: "",
-    category: "",
-    techStack: "",
-    previewUrl: "",
-    repoUrl: "",
-    images: "",
-    featured: false,
-    published: true,
+    title: project?.title || "",
+    description: project?.description || "",
+    price: project?.price?.toString() || "",
+    category: project?.category || "",
+    techStack: project?.techStack?.join(", ") || "",
+    previewUrl: project?.previewUrl || "",
+    repoUrl: project?.repoUrl || "",
+    images: project?.images?.join("\n") || "",
+    featured: project?.featured || false,
+    published: project?.published ?? true,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,8 +164,12 @@ export function ProjectForm() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/admin/projects", {
-        method: "POST",
+      const url = project 
+        ? `/api/admin/projects/${project.id}` 
+        : "/api/admin/projects"
+      
+      const response = await fetch(url, {
+        method: project ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
@@ -46,14 +183,47 @@ export function ProjectForm() {
         router.push("/admin/projects")
         router.refresh()
       } else {
-        alert("Failed to create project")
+        const error = await response.json()
+        alert(error.message || "Failed to save project")
       }
     } catch (error) {
-      console.error("Error creating project:", error)
+      console.error("Error saving project:", error)
       alert("An error occurred")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleDelete = async () => {
+    if (!project) return
+    
+    if (!confirm("Are you sure you want to delete this project?")) {
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/admin/projects/${project.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        router.push("/admin/projects")
+        router.refresh()
+      } else {
+        alert("Failed to delete project")
+      }
+    } catch (error) {
+      console.error("Error deleting project:", error)
+      alert("An error occurred")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleAddImage = (url: string) => {
+    const currentImages = formData.images ? formData.images + "\n" : ""
+    setFormData({ ...formData, images: currentImages + url })
   }
 
   return (
@@ -98,6 +268,7 @@ export function ProjectForm() {
                 <Input
                   id="price"
                   type="number"
+                  step="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   placeholder="99.99"
@@ -154,6 +325,15 @@ export function ProjectForm() {
               </div>
             </div>
 
+            <FileUpload
+              id="imageUpload"
+              label="Upload Image (adds to list below)"
+              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+              value=""
+              onChange={handleAddImage}
+              folder="projects"
+            />
+
             <div className="space-y-2">
               <Label htmlFor="images" className="text-slate-300">Image URLs (one per line)</Label>
               <Textarea
@@ -161,10 +341,24 @@ export function ProjectForm() {
                 value={formData.images}
                 onChange={(e) => setFormData({ ...formData, images: e.target.value })}
                 placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-                rows={3}
+                rows={4}
                 className="glass border-white/10 bg-white/5 text-white"
               />
             </div>
+
+            {formData.images && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {formData.images.split("\n").filter(Boolean).map((url, index) => (
+                  <div key={index} className="relative aspect-video rounded-lg overflow-hidden bg-slate-800">
+                    <img 
+                      src={url} 
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -212,11 +406,25 @@ export function ProjectForm() {
             className="bg-gradient-to-r from-blue-500 to-purple-500"
           >
             {isLoading ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</>
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
             ) : (
-              <><Save className="mr-2 h-4 w-4" /> Create Project</>
+              <><Save className="mr-2 h-4 w-4" /> {project ? "Update Project" : "Create Project"}</>
             )}
           </Button>
+          
+          {project && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleDelete}
+              disabled={isLoading}
+              className="border-red-500/20 text-red-400 hover:bg-red-500/10"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          )}
+          
           <Button
             type="button"
             variant="outline"
